@@ -50,6 +50,14 @@ std::string ConvertString(const std::wstring& str) {
 
 #pragma endregion
 
+struct Vector4
+{
+	float w;
+	float x;
+	float y;
+	float z;
+};
+
 // デバッグ用ログの出力用関数
 void Log(const std::string& message)
 {
@@ -363,7 +371,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
 	swapChainDesc.Width = kClientWidth;  // 画面の幅。ウィンドウのクライアント幅を同じものにしておく
 	swapChainDesc.Height = kClientHeight;  // 画面を高さ。ウィンドウのクライアント領域を同じものにしておく
-	swapChainDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;  // 色の形式
+	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;  // 色の形式
 	swapChainDesc.SampleDesc.Count = 1;  // マルチサンプルしない
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;  // 描画のターゲットとして利用する
 	swapChainDesc.BufferCount = 2;  // ダブルバッファ
@@ -406,7 +414,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	// RTVの設定
 	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{};
-	rtvDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
 	// ディスクリプタの戦闘を取得する
@@ -426,7 +434,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	device->CreateRenderTargetView(swapChainResources[1], &rtvDesc, rtvHandles[1]);
 	
 #pragma endregion
-
+	
 	typedef struct D3D12_CPU_DESCRIPTOR_HANDLE
 	{
 		SIZE_T ptr;
@@ -463,6 +471,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma endregion
 
+#pragma region RootsSignatureの生成
 	// RootSignature作成
 	D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
 	descriptionRootSignature.Flags =
@@ -488,6 +497,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		IID_PPV_ARGS(&rootSignature));
 	assert(SUCCEEDED(hr));
 
+#pragma endregion
+
+#pragma region InputLayoutの設定
+
 	// InputLayout
 	D3D12_INPUT_ELEMENT_DESC inputElementDesec[1] = {};
 	inputElementDesec[0].SemanticName = "POSITION";
@@ -498,10 +511,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	inputLayoutDesc.pInputElementDescs = inputElementDesec;
 	inputLayoutDesc.NumElements = _countof(inputElementDesec);
 
+#pragma endregion
+
+#pragma region BlendStateの設定
+
 	// BlendStateの設定
 	D3D12_BLEND_DESC blendDesc{};
 	// 全ての色要素を書き込む
 	blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+
+#pragma endregion
+
+#pragma region RasterizerStateの設定
 
 	// RasiterzerStateの設定
 	D3D12_RASTERIZER_DESC rasterizerDesc{};
@@ -509,6 +530,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
 	// 三角形の中を塗りつぶす
 	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+
+#pragma endregion
+
+#pragma region Shaderをコンパイルする
 
 	// Shaderをコンパイルする
 	IDxcBlob* vertexShaderBlob = CompileShader(L"Object3D.VS.hlsl",
@@ -518,6 +543,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	IDxcBlob* pixelShaderBlob = CompileShader(L"Object3D.PS.hlsl",
 		L"ps_6_0", dxcUtils, dxcCompiler, includeHandler);
 	assert(pixelShaderBlob != nullptr);
+
+#pragma endregion
+
+#pragma region PSOの生成
 
 	// PSO
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc{};
@@ -529,7 +558,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	};  // VertexShader
 	graphicsPipelineStateDesc.PS =
 	{
-		vertexShaderBlob->GetBufferPointer(),vertexShaderBlob->GetBufferSize()
+		pixelShaderBlob->GetBufferPointer(),pixelShaderBlob->GetBufferSize()
 	};  // PixelShader
 	graphicsPipelineStateDesc.BlendState = blendDesc;  // BlendShader
 	graphicsPipelineStateDesc.RasterizerState = rasterizerDesc;  // RasterizerState
@@ -552,29 +581,83 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		IID_PPV_ARGS(&graphicsPilelineState));
 	assert(SUCCEEDED(hr));
 
+#pragma endregion
 
+#pragma region VertexResourceを生成
 
-	// 
+	// 頂点リソース用のヒープの設定
 	D3D12_HEAP_PROPERTIES uploadHeepProperties{};
-	uploadHeepProperties.Type = D3D12_HEAP_TYPE_UPLOAD;  // 
-	// 
+	uploadHeepProperties.Type = D3D12_HEAP_TYPE_UPLOAD;  // UploadHeepを使う
+	// 頂点リソースの設定
 	D3D12_RESOURCE_DESC vertexResoueceDesc{};
-	// 
+	// バッファリソース。テクスチャの場合はまた別の設定をする
 	vertexResoueceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	vertexResoueceDesc.Width = sizeof(Vector4) * 3;  // 
-	// 
+	vertexResoueceDesc.Width = sizeof(Vector4) * 3;  // リソースのサイズ。今回はVector4を3頂点分
+	// バッファの場合はこれらを１にする
 	vertexResoueceDesc.Height = 1;
 	vertexResoueceDesc.DepthOrArraySize = 1;
 	vertexResoueceDesc.MipLevels = 1;
 	vertexResoueceDesc.SampleDesc.Count = 1;
-	// 
+	// バッファの場合はこれにする決まり
 	vertexResoueceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	// 
+	// 実際に頂点リソースを作る
 	ID3D12Resource* vertexResource = nullptr;
 	hr = device->CreateCommittedResource(&uploadHeepProperties, D3D12_HEAP_FLAG_NONE,
 		&vertexResoueceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
 		IID_PPV_ARGS(&vertexResource));
 	assert(SUCCEEDED(hr));
+
+#pragma endregion
+
+#pragma region VertexBufferViewを作成
+
+	// 頂点バッファビューを作成する
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferView{};
+	// リソースの先頭のアドレスから使う
+	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
+	// 使用するリソースのサイズは頂点３つ分のサイズ
+	vertexBufferView.SizeInBytes = sizeof(Vector4) * 3;
+	// １頂点あたりのサイズ
+	vertexBufferView.StrideInBytes = sizeof(Vector4);
+
+#pragma endregion
+
+#pragma region Resourceにデータを書き込む
+
+	// 頂点リソースにデータを書き込む
+	Vector4* vertexData = nullptr;
+	// 書き込むためのアドレスを取得
+	vertexResource->Map(0, nullptr, reinterpret_cast<void**>(&vertexData));
+	// 左下
+	vertexData[0] = { -0.5f,-0.5f,0.0f,1.0f };
+	// 上
+	vertexData[1] = { 0.0f,0.5f,0.0f,1.0f };
+	// 右下
+	vertexData[2] = { 0.5f,-0.5f,0.0f,1.0f };
+
+#pragma endregion
+
+#pragma region ViewportとScissor
+
+	// ビューポート
+	D3D12_VIEWPORT viewport{};
+	// クライアント領域のサイズを一緒にした画面全体に表示
+	viewport.Width = kClientWidth;
+	viewport.Height = kClientHeight;
+	viewport.TopLeftX = 0;
+	viewport.TopLeftY = 0;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+
+	// シザー矩形
+	D3D12_RECT scissorRect{};
+	// 基本的にビューポートと同じ矩形が構成されるようにする
+	scissorRect.left = 0;
+	scissorRect.right = kClientWidth;
+	scissorRect.top = 0;
+	scissorRect.bottom = kClientHeight;
+
+#pragma endregion
 
 	//出力ウィンドウへの文字出力
 	Log("Hello,DirectX!\n");
@@ -622,6 +705,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			// 指定した色で画面全体をクリアにする
 			float clearColor[] = { 0.1f,0.25f,0.5f,1.0f };  // 青っぽい色。RGBAの順
 			commandList->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
+
+			//===============
+			// 描画ここから
+			//===============
+
+			commandList->RSSetViewports(1, &viewport);  // Viewportを設定
+			commandList->RSSetScissorRects(1, &scissorRect);  // Scirssorを設定
+			// RootSignatureを設定。PSOに設定しているけど別途注意が必要
+			commandList->SetGraphicsRootSignature(rootSignature);
+			commandList->SetPipelineState(graphicsPilelineState);  // PSOを設定
+			commandList->IASetVertexBuffers(0, 1, &vertexBufferView);  // VBVを設定
+			// 形状を設定。PSOに設定しているものとはまた別。同じものを設定すると考えておけばいい
+			commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			// 描画！（DrawCall/ドローコール）。3頂点で1つのインスタンス。インスタンスについては今後
+			commandList->DrawInstanced(3, 1, 0, 0);
+
+			//===============
+			// 描画ここまで
+			//===============
 
 			// 画面に描く処理はすべて終わり、画面に映すので状態を遷移
 			// 今回はRinderTargetからPresentにする
@@ -678,6 +780,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	device->Release();
 	useAdapter->Release();
 	dxgifactory->Release();
+	vertexResource->Release();
+	graphicsPilelineState->Release();
+	signatureBlob->Release();
+	if (errorBlob)
+	{
+		errorBlob->Release();
+	}
+	rootSignature->Release();
+	pixelShaderBlob->Release();
+	vertexShaderBlob->Release();
 
 #ifdef _DEBUG
 	debugController->Release();
