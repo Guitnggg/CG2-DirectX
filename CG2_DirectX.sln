@@ -8,7 +8,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ソリューション項目", "ソリューション項目", "{1FAD87F8-6D0F-4E60-8C04-44EB384AC8E2}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
-		Object3d.VS.hlsl = Object3d.VS.hlsl
 	EndProjectSection
 EndProject
 Global
