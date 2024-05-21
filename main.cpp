@@ -659,6 +659,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma endregion
 
+#pragma region RootParameter
+
+	// RootSignature作成
+	D3D12_ROOT_SIGNATURE_DESC descriptionRootSignature{};
+	descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+
+	// RootSignature作成。複数設定できるので配列。今回は結果１つだけなので長さ１の配列
+	D3D12_ROOT_PARAMETER rootParameter[1] = {};
+	rootParameter[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;  // CBVを使う
+	rootParameter[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;  // PixelShaderで使う
+	rootParameter[0].Descriptor.ShaderRegister = 0;  // レジスタ番号0とバインド
+	descriptionRootSignature.pParameters = rootParameter;  // ルートパラメータ配列へのポインタ
+	descriptionRootSignature.NumParameters = _countof(rootParameter);  // 配列の長さ
+
+#pragma endregion
+
+	
 	//出力ウィンドウへの文字出力
 	Log("Hello,DirectX!\n");
 
