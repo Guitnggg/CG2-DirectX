@@ -97,6 +97,13 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="externals\Imgui\imgui.cpp" />
+    <ClCompile Include="externals\Imgui\imgui_demo.cpp" />
+    <ClCompile Include="externals\Imgui\imgui_draw.cpp" />
+    <ClCompile Include="externals\Imgui\imgui_impl_dx12.cpp" />
+    <ClCompile Include="externals\Imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="externals\Imgui\imgui_tables.cpp" />
+    <ClCompile Include="externals\Imgui\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -112,6 +119,19 @@ copy "$(WindowsSdkDir)bin\$(TargetPlatformVersion)\x64\dxil.dll" "$(TargetDir)dx
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="externals\Imgui\imconfig.h" />
+    <ClInclude Include="externals\Imgui\imgui.h" />
+    <ClInclude Include="externals\Imgui\imgui_impl_dx12.h" />
+    <ClInclude Include="externals\Imgui\imgui_impl_win32.h" />
+    <ClInclude Include="externals\Imgui\imgui_internal.h" />
+    <ClInclude Include="externals\Imgui\imstb_rectpack.h" />
+    <ClInclude Include="externals\Imgui\imstb_textedit.h" />
+    <ClInclude Include="externals\Imgui\imstb_truetype.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="externals\Imgui\LICENSE.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
