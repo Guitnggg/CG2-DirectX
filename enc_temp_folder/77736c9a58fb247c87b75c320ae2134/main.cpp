@@ -286,35 +286,6 @@ Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Ve
 	return result;
 }
 
-
-Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspect, float nearZ, float farZ) {
-	Matrix4x4 result;
-
-	float f = 1.0f / tan(fovY / 2.0f);
-	float range = farZ - nearZ;
-
-	result.m[0][0] = f / aspect;
-	result.m[1][1] = f;
-	result.m[2][2] = farZ / range;
-	result.m[2][3] = 1.0f;
-	result.m[3][2] = -(farZ * nearZ) / range;
-
-	return result;
-}
-
-Matrix4x4 MakeViewMatrix(float x, float y, float width, float height, float minZ, float maxZ) {
-	Matrix4x4 result;
-
-	result.m[0][0] = width / 2.0f;
-	result.m[1][1] = -height / 2.0f;
-	result.m[2][2] = maxZ - minZ;
-	result.m[3][0] = x + width / 2.0f;
-	result.m[3][1] = y + height / 2.0f;
-	result.m[3][2] = minZ;
-
-	return result;
-}
-
 // デバッグ用ログの出力用関数
 void Log(const std::string& message)
 {
@@ -1060,18 +1031,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 			
 
-			// 回転させる
-			transform.rotate.y += 0.03f;
-			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
-			*wvpData = worldMatrix;
+			//// 回転させる
+			//transform.rotate.y += 0.03f;
+			//Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
+			//*wvpData = worldMatrix;
 
-			Matrix4x4 cameraMatrix = MakeAffineMatrix(transform.scale,transform.rotate,transform.translate);
-			Matrix4x4 viewMarix = Inverse(cameraMatrix);
-			Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
+			//Matrix4x4 cameraMatrix = MakeAffineMatrix(transform.scale,transform.rotate,transform.translate);
+			//Matrix4x4 viewMarix = Inverse(cameraMatrix);
+			//Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
 
-			// 
-			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMarix, projectionMatrix));
-			*transformationMatrixData = worldViewProjectionMatrix;
+			//// 
+			//Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMarix, projectionMatrix));
+			//*transformationMatrixData = worldViewProjectionMatrix;
 
 
 
