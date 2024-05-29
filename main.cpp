@@ -281,22 +281,19 @@ Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Ve
 	return result;
 }
 
-Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspect, float nearZ, float farZ) {
-	Matrix4x4 mat = { 0 };  // 初期化
+Matrix4x4 MakePerspectiveFovMatrix(float fov, float aspectRatio, float nearClip, float farClip) {
+	Matrix4x4 matrix = {};
+	float tanHalfFov = tanf(fov / 2.0f);
 
-	float tanHalfFovY = std::tan(fovY / 2.0f);
-	float zRange = nearZ - farZ;
+	matrix.m[0][0] = 1.0f / (aspectRatio * tanHalfFov);
+	matrix.m[1][1] = 1.0f / tanHalfFov;
+	matrix.m[2][2] = farClip / (farClip - nearClip);
+	matrix.m[2][3] = 1.0f;
+	matrix.m[3][2] = -(farClip * nearClip) / (farClip - nearClip);
+	matrix.m[3][3] = 0.0f;
 
-	mat.m[0][0] = 1.0f / (tanHalfFovY * aspect);
-	mat.m[1][1] = 1.0f / tanHalfFovY;
-	mat.m[2][2] = (farZ + nearZ) / zRange;
-	mat.m[2][3] = -1.0f;
-	mat.m[3][2] = 2.0f * farZ * nearZ / zRange;
-
-	return mat;
+	return matrix;
 }
-
-Matrix4x4* transformationMatrixData = new Matrix4x4();
 
 // デバッグ用ログの出力用関数
 void Log(const std::string& message)
@@ -321,7 +318,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	// 標準のメッセージ処理を行う
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
-
 
 
 IDxcBlob* CompileShader(
@@ -968,7 +964,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma endregion
 
-
 	// WVP用のリソースを作る。Matrix4x4　１つ分のサイズを用意する
 	ID3D12Resource* wvpResource = CreateBufferResource(device, sizeof(Matrix4x4));
 	// データを書き込む
@@ -1005,11 +1000,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			*wvpData = worldMatrix;
 
 			// ３次元的にする
-			Matrix4x4 cameraMatrix = MakeAffineMatrix(transform.scale,transform.rotate,transform.translate);
+			Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
 			Matrix4x4 viewMarix = Inverse(cameraMatrix);
 			Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
 			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMarix, projectionMatrix));
-			*transformationMatrixData = worldViewProjectionMatrix;
+			*wvpData = worldViewProjectionMatrix;
 
 			// これから書き込むバックバッファのインデックスを取得
 			UINT backBufferIndex = swapChain->GetCurrentBackBufferIndex();
