@@ -11,6 +11,12 @@
 
 #include <dxcapi.h>
 
+#include "externals/Imgui/imgui.h"
+#include "externals/Imgui/imgui_impl_dx12.h"
+#include "externals/Imgui/imgui_impl_win32.h"
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+
+
 #pragma comment(lib,"d3d12.lib")
 #pragma comment(lib,"dxgi.lib")
 
