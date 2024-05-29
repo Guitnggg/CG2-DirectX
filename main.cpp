@@ -281,6 +281,23 @@ Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Ve
 	return result;
 }
 
+Matrix4x4 MakePerspectiveFovMatrix(float fovY, float aspect, float nearZ, float farZ) {
+	Matrix4x4 mat = { 0 };  // 初期化
+
+	float tanHalfFovY = std::tan(fovY / 2.0f);
+	float zRange = nearZ - farZ;
+
+	mat.m[0][0] = 1.0f / (tanHalfFovY * aspect);
+	mat.m[1][1] = 1.0f / tanHalfFovY;
+	mat.m[2][2] = (farZ + nearZ) / zRange;
+	mat.m[2][3] = -1.0f;
+	mat.m[3][2] = 2.0f * farZ * nearZ / zRange;
+
+	return mat;
+}
+
+Matrix4x4* transformationMatrixData = new Matrix4x4();
+
 // デバッグ用ログの出力用関数
 void Log(const std::string& message)
 {
