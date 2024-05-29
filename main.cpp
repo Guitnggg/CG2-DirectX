@@ -82,6 +82,8 @@ struct Transform
 	Vector3 translate;
 };
 
+float inputFloat3[3] = { 0,0,0 };
+
 // 行列の積
 Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2)
 {
@@ -314,6 +316,8 @@ Matrix4x4 MakeViewMatrix(float x, float y, float width, float height, float minZ
 
 	return result;
 }
+
+Matrix4x4* transformationMatrixData = new Matrix4x4();
 
 // デバッグ用ログの出力用関数
 void Log(const std::string& message)
@@ -1079,6 +1083,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			ImGui::ShowDemoWindow();
 			ImGui::Text("ImGuiTest");
 			ImGui::Text("Color: %0.2f,%0.2f,%0.2f,", materialData->x, materialData->y, materialData->z);
+			ImGui::InputFloat3("InputFloat3", inputFloat3);
+			ImGui::SliderFloat3("SliderFloat3", inputFloat3, 0.0f, 1.0f);
 			
 			// ImGuiの内部コマンドを生成する
 			ImGui::Render();
