@@ -1038,7 +1038,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		else
 		{
 			// 回転させる
-			transform.rotate.y += 0.03f;
+			/*transform.rotate.y += 0.03f;*/
 			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
 			*wvpData = worldMatrix;
 
@@ -1055,9 +1055,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			ImGui::NewFrame();
 
 			// 開発用UIの処理。実際に開発用のUIを出す場合はここをゲーム固有の処理に置き換える
-			ImGui::ShowDemoWindow();
-			ImGui::Text("ImGuiTest");
-			ImGui::Text("Color: %0.2f,%0.2f,%0.2f,", materialData->x, materialData->y, materialData->z);
+			/*ImGui::ShowDemoWindow();*/
+			/*ImGui::Text("ImGuiTest");
+			ImGui::Text("Color: %0.2f,%0.2f,%0.2f,", materialData->x, materialData->y, materialData->z);*/
+			ImGui::ColorEdit4("Material Color", reinterpret_cast<float*>(materialData));
 
 			// ImGuiの内部コマンドを生成する
 			ImGui::Render();
