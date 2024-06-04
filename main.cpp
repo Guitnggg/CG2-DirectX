@@ -83,6 +83,8 @@ struct Transform
 	Vector3 translate;
 };
 
+float inputFloat3[3] = { 0,0,0 };
+
 // 行列の積
 Matrix4x4 Multiply(const Matrix4x4& m1, const Matrix4x4& m2)
 {
@@ -967,8 +969,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	Vector4* materialData = nullptr;
 	// 書き込むためのアドレスを取得
 	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
+
+	//色データ
+	float materialFloat[4] = { 1.0f,0.0f,0.0f,1.0f };
+
 	// 今回は赤を書き込んでみる
-	*materialData = Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+	*materialData = Vector4(1.0, 0.0f, 0.0f, 1.0f);
 
 #pragma endregion
 
@@ -1038,7 +1044,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		else
 		{
 			// 回転させる
-			transform.rotate.y += 0.03f;
+		/*	transform.rotate.y += 0.03f;*/
 			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
 			*wvpData = worldMatrix;
 
@@ -1055,10 +1061,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			ImGui::NewFrame();
 
 			// 開発用UIの処理。実際に開発用のUIを出す場合はここをゲーム固有の処理に置き換える
-			ImGui::ShowDemoWindow();
-			ImGui::Text("ImGuiTest");
-			ImGui::Text("Color: %0.2f,%0.2f,%0.2f,", materialData->x, materialData->y, materialData->z);
-
+			/*ImGui::ShowDemoWindow();*/
+			
+			ImGui::SliderFloat4("MaterialData", materialFloat, 0.0f, 1.0f);
+			
 			// ImGuiの内部コマンドを生成する
 			ImGui::Render();
 
