@@ -607,6 +607,34 @@ ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t 
 
 
 
+// CSV用のヒープでディスクリプタの数は１。DSVはShader内で触るものではないので、ShaderVisibleはfalse
+ID3D12DescriptorHeap* dsvDescriptorHeap = CreateDescriptorHeap(device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
+
+// DSVの設定
+D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
+dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;  // Format。基本的にはResourceに合わせる
+dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;  // 2dTexture
+// DSVHeapの先頭にDSVを作る
+device->CreateDepthStencilView(depthStencilResource, &device, dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+
+
+
+// DepthStencilSteteの設定
+D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
+// Depthの機能を有効化する
+depthStencilDesc.DepthEnable = true;
+// 書き込みします
+depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+// 比較関数はLessEqual。つまり、近ければ描画される
+depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+
+// DepthStencilの設定
+graphicsPipelineStateDesc.DepthStencilState = depthStencilDesc;
+graphicsPipelineStateDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+
+
+
 //Windowsアプリでのエントリーポイント（main関数）
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
@@ -878,6 +906,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	// ディスクリプタの戦闘を取得する
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvStartHandle = rtvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+
+	// 描画先のRTVとDSVを設定する
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 
 	// RTVを２つ作るのでディスクリプタを２つ用意する
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[2];
@@ -1288,7 +1319,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMarix, projectionMatrix));
 			*wvpData = worldViewProjectionMatrix;
 
-
+			// ImGuiの準備
 			ImGui_ImplDX12_NewFrame();
 			ImGui_ImplWin32_NewFrame();
 			ImGui::NewFrame();
@@ -1326,11 +1357,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			commandList->ResourceBarrier(1, &barrier);
 
 			// 描画先のRTVを設定する
-			commandList->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, nullptr);
+			commandList->OMSetRenderTargets(1, &rtvHandles[backBufferIndex], false, &dsvHandle);
 
 			// 指定した色で画面全体をクリアにする
 			float clearColor[] = { 0.1f,0.25f,0.5f,1.0f };  // 青っぽい色。RGBAの順
 			commandList->ClearRenderTargetView(rtvHandles[backBufferIndex], clearColor, 0, nullptr);
+
+
+			//指定した深度で画面全体をクリアする
+			commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
 
 			// 
 			ID3D12DescriptorHeap* descriptorHeaps[] = { srvDescriptorHeap };
