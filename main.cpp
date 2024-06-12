@@ -1392,7 +1392,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	materialResource->Release();
 	wvpResource->Release();
 	textureResource->Release();
-	
+
 	
 
 #ifdef _DEBUG
