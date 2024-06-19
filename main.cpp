@@ -306,6 +306,7 @@ Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotate, const Ve
 	return result;
 }
 
+// 透視投影行列
 Matrix4x4 MakePerspectiveFovMatrix(float fov, float aspectRatio, float nearClip, float farClip) {
 	Matrix4x4 matrix = {};
 	float tanHalfFov = tanf(fov / 2.0f);
@@ -1092,14 +1093,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma endregion
 
-	// DepthStencilSteteの設定
-	D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
-	// Depthの機能を有効化する
-	depthStencilDesc.DepthEnable = true;
-	// 書き込みします
-	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-	// 比較関数はLessEqual。つまり、近ければ描画される
-	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+
 
 #pragma region PSOの生成
 
@@ -1262,6 +1256,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	ID3D12Resource* textureResource = CreateTextrueResource(device, metadata);
 	ID3D12Resource* intermediateResource = UploadTextureData(textureResource, mipImages, device, commandList);
 	
+	// DepthStencilTextureとしてウィンドウのサイズで作成
+	ID3D12Resource* depthStencilResource = CreateDepthStencilTextureResource(device, kClientWidth, kClientHeight);
 
 	// metaDataをもとにSRVの設定
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
@@ -1335,8 +1331,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	*wvpData = MakeIdentity4x4();
 
 
-	// DepthStencilTextureとしてウィンドウのサイズで作成
-	ID3D12Resource* depthStencilResource = CreateDepthStencilTextureResource(device, kClientWidth, kClientHeight);
 
 
 	// Transform変数の生成
@@ -1561,6 +1555,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	materialResource->Release();
 	wvpResource->Release();
 	textureResource->Release();
+	vertexResourceSprite->Release();
 
 
 
