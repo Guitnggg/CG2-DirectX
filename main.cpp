@@ -622,29 +622,6 @@ ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t 
 
 
 
-
-// CSV用のヒープでディスクリプタの数は１。DSVはShader内で触るものではないので、ShaderVisibleはfalse
-ID3D12DescriptorHeap* dsvDescriptorHeap = CreateDescriptorHeap(device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
-
-// DSVの設定
-D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
-dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;  // Format。基本的にはResourceに合わせる
-dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;  // 2dTexture
-// DSVHeapの先頭にDSVを作る
-device->CreateDepthStencilView(depthStencilResource, &dsvDesc, dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
-
-
-
-// DepthStencilSteteの設定
-D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
-// Depthの機能を有効化する
-depthStencilDesc.DepthEnable = true;
-// 書き込みします
-depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-// 比較関数はLessEqual。つまり、近ければ描画される
-depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-
 // DepthStencilの設定
 graphicsPipelineStateDesc.DepthStencilState = depthStencilDesc;
 graphicsPipelineStateDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -1106,6 +1083,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma endregion
 
+	// DepthStencilSteteの設定
+	D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
+	// Depthの機能を有効化する
+	depthStencilDesc.DepthEnable = true;
+	// 書き込みします
+	depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	// 比較関数はLessEqual。つまり、近ければ描画される
+	depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+
 #pragma region PSOの生成
 
 	// PSO
@@ -1281,7 +1267,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	device->CreateShaderResourceView(textureResource, &srvDesc, textureSrvHandleCPU);
 
 
-
+	// DSVの設定
+	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
+	dsvDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;  // Format。基本的にはResourceに合わせる
+	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;  // 2dTexture
+	// DSVHeapの先頭にDSVを作る
+	device->CreateDepthStencilView(depthStencilResource, &dsvDesc, dsvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 
 	// マテリアル用のリソースを作る。今回はcolor1つ分のサイズを用意する（色のサイズはVector4）
