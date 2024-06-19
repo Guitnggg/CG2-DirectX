@@ -1479,8 +1479,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	materialResource->Release();
 	wvpResource->Release();
 	textureResource->Release();
-	
+	intermediateResource->Release();
 	depthStencilResource->Release();
+	
 
 
 #ifdef _DEBUG
