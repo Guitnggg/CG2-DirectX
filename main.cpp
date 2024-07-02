@@ -1166,9 +1166,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	// Sprite用の頂点リソースを作る
 	ID3D12Resource* vertexResourceSprite = CreateBufferResource(device, sizeof(VertexData) * 6);
 
-
-
 #pragma endregion
+
+	//=====
+	// ここで球体の生成用の計算をする
+	//=====
+
 
 #pragma region VertexBufferViewを作成
 
