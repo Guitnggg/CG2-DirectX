@@ -3,6 +3,7 @@
 #include <string>
 #include <format>
 #include <vector>
+#include <cmath>
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -1198,6 +1199,25 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	//=====
 	// ここで球体の生成用の計算をする
 	//=====
+	
+	//const uint32_t kSubdivision = 10;
+	//// 経度分割１つ分の角度。　
+	//const float kLonEvery = pi * 2.0f / float(kSubdivision);
+	//// 緯度分割１つ分の角度。　θ
+	//const float kLatEvery = pi / float(kSubdivision);
+	//// 経度の方向に分割しながら線を描く
+	//for (latIndex = 0; latIndex < kSubdivision; ++latIndex)
+	//{
+	//	float lat = pi / 2.0f + kLatEvery * latIndex;  // θ
+	//	// 頂点データを入力する。基準点a
+	//	for (lonIndex = 0; lonIndex < kSubdivision; ++lonIndex)
+	//	{
+	//		uint32_t start = (latIndex * kSubdivision + lonIndex) * 6;
+	//		float lon = lonIndex * kLonEvery;  // 
+	//		// 
+	//		VertexData[start].position.x = cos(lat) * cos(lon);
+	//	}
+	//}
 
 
 #pragma region VertexBufferViewを作成
