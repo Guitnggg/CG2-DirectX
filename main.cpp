@@ -337,6 +337,93 @@ Matrix4x4 MakeOrthographicMatrix(float left, float top, float right, float botto
 	return matrix;
 }
 
+struct VertexData
+{
+	Vector4 position;
+	Vector2 texcoord;
+	Vector3 normal;
+};
+
+struct Material
+{
+	Vector4 color;
+	int32_t enableLighting;
+};
+
+struct TransformationMatrix
+{
+	Matrix4x4 WVP;
+	Matrix4x4 World;
+};
+
+struct DiectionalLight
+{
+	Vector4 color;      // !< ライトの色
+	Vector3 direction;  // !< ライトの向き
+	float intensity;    // !< 輝度
+};
+
+
+
+
+
+
+//// Lightingを有効にする
+//materilDataSprite->enableLighting = false;
+
+//// sprite用のマテリアルリソースを作る
+//ID3D12Resource* materialResourceSprite = CreateBufferResource(device, sizeof(Material))
+//{
+//	// ...Mapしてデータを書き込む。色は白を設定しておくといい
+//
+//	// spriteはLightingしないのでfalseを設定する
+//	materialDataSprite->enableLighting = false;
+//	
+//}
+
+
+//// マテリアルCBufferの場所を設定
+//CommandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
+
+
+//ConstantBuffer<DirectionalLight> gDirectionalLight:register(b1);
+
+//rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;  // CBVを使う
+//rootParameters[3].ShaderVisibility = D3D12_SHADER_VISABILITY_PIXEL;  // PixelShaderで使う
+//rootParameters[3].Descriptor.ShaderRegister = 1;  // レジスタ番号１を使う
+
+// デフォルト値はとりあえず以下のようにしておく
+//directionalLightData->color = { 1.0f,1.0f,1.0f,1.0f };
+//directionalLightData->direction = { 0.0f,-1.0f,0.0f };
+//directionalLightData->intensity = 1.0f;
+
+
+
+
+
+//=====
+// のちにhlslに追加する
+//=====
+
+//struct DirectionalLight
+//{
+//	float32_t4 color;      // !< ライトの色
+//	float32_t3 direction;  // !< ライトの向き
+//	float intensity;	   // !< 輝度
+//};
+
+//if (gMatrial.enableLighting != 0)  // Lightingする場合
+//{
+//	float cos = saturate(dot(normalize(input.normal), -gDirectionalLight.direction));
+//	output.color = gMaterial.color * textureColor * gDirectionalLight.color * cos * gDirectionalLight.intensity;
+//}
+//else  // Lightingしない場合。前回までと同じ演算
+//{
+//	output.color = gMaterial.color * textureColor;
+//}
+
+
+
 
 // デバッグ用ログの出力用関数
 void Log(const std::string& message)
@@ -1082,6 +1169,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	inputElementDesec[1].SemanticIndex = 0;
 	inputElementDesec[1].Format = DXGI_FORMAT_R32G32_FLOAT;
 	inputElementDesec[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+	inputElementDesec[2].SemanticName = "NORMAL";
+	inputElementDesec[2].SemanticIndex = 0;
+	inputElementDesec[2].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	inputElementDesec[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
 	inputLayoutDesc.pInputElementDescs = inputElementDesec;
 	inputLayoutDesc.NumElements = _countof(inputElementDesec);
