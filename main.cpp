@@ -1011,6 +1011,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma region RootParameter
 
+	
+
 	// RootSignature作成。複数設定できるので配列。今回は結果１つだけなので長さ１の配列
 	D3D12_ROOT_PARAMETER rootParameters[3] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;  // CBVを使う
