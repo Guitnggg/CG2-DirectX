@@ -101,6 +101,20 @@ struct VertexData
 {
 	Vector4 position;
 	Vector2 texcoord;
+	Vector3 normal;
+};
+
+struct TransformationMatrix
+{
+	Matrix4x4 WVP;
+	Matrix4x4 World;
+};
+
+struct DirectionLight
+{
+	Vector4 color;
+	Vector3 direction;
+	float intensity;
 };
 
 // 行列の積
@@ -336,93 +350,6 @@ Matrix4x4 MakeOrthographicMatrix(float left, float top, float right, float botto
 
 	return matrix;
 }
-
-struct VertexData
-{
-	Vector4 position;
-	Vector2 texcoord;
-	Vector3 normal;
-};
-
-struct Material
-{
-	Vector4 color;
-	int32_t enableLighting;
-};
-
-struct TransformationMatrix
-{
-	Matrix4x4 WVP;
-	Matrix4x4 World;
-};
-
-struct DiectionalLight
-{
-	Vector4 color;      // !< ライトの色
-	Vector3 direction;  // !< ライトの向き
-	float intensity;    // !< 輝度
-};
-
-
-
-
-
-
-//// Lightingを有効にする
-//materilDataSprite->enableLighting = false;
-
-//// sprite用のマテリアルリソースを作る
-//ID3D12Resource* materialResourceSprite = CreateBufferResource(device, sizeof(Material))
-//{
-//	// ...Mapしてデータを書き込む。色は白を設定しておくといい
-//
-//	// spriteはLightingしないのでfalseを設定する
-//	materialDataSprite->enableLighting = false;
-//	
-//}
-
-
-//// マテリアルCBufferの場所を設定
-//CommandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
-
-
-//ConstantBuffer<DirectionalLight> gDirectionalLight:register(b1);
-
-//rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;  // CBVを使う
-//rootParameters[3].ShaderVisibility = D3D12_SHADER_VISABILITY_PIXEL;  // PixelShaderで使う
-//rootParameters[3].Descriptor.ShaderRegister = 1;  // レジスタ番号１を使う
-
-// デフォルト値はとりあえず以下のようにしておく
-//directionalLightData->color = { 1.0f,1.0f,1.0f,1.0f };
-//directionalLightData->direction = { 0.0f,-1.0f,0.0f };
-//directionalLightData->intensity = 1.0f;
-
-
-
-
-
-//=====
-// のちにhlslに追加する
-//=====
-
-//struct DirectionalLight
-//{
-//	float32_t4 color;      // !< ライトの色
-//	float32_t3 direction;  // !< ライトの向き
-//	float intensity;	   // !< 輝度
-//};
-
-//if (gMatrial.enableLighting != 0)  // Lightingする場合
-//{
-//	float cos = saturate(dot(normalize(input.normal), -gDirectionalLight.direction));
-//	output.color = gMaterial.color * textureColor * gDirectionalLight.color * cos * gDirectionalLight.intensity;
-//}
-//else  // Lightingしない場合。前回までと同じ演算
-//{
-//	output.color = gMaterial.color * textureColor;
-//}
-
-
 
 
 // デバッグ用ログの出力用関数
@@ -710,6 +637,86 @@ ID3D12Resource* CreateDepthStencilTextureResource(ID3D12Device* device, int32_t 
 }
 
 
+D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(ID3D12DescriptorHeap* descriptorHeap, uint32_t descriptorSize, uint32_t index)
+{
+	D3D12_CPU_DESCRIPTOR_HANDLE handleCPU = descriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	handleCPU.ptr += (descriptorSize * index);
+	return handleCPU;
+}
+
+
+D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(ID3D12DescriptorHeap* descriptorHeap, uint32_t descriptorSize, uint32_t index)
+{
+	D3D12_GPU_DESCRIPTOR_HANDLE handleGPU = descriptorHeap->GetGPUDescriptorHandleForHeapStart();
+	handleGPU.ptr += (descriptorSize * index);
+	return handleGPU;
+}
+
+
+
+bool useMonsterBall = true;
+
+
+
+
+
+
+//// Lightingを有効にする
+//materilDataSprite->enableLighting = false;
+
+//// sprite用のマテリアルリソースを作る
+//ID3D12Resource* materialResourceSprite = CreateBufferResource(device, sizeof(Material))
+//{
+//	// ...Mapしてデータを書き込む。色は白を設定しておくといい
+//
+//	// spriteはLightingしないのでfalseを設定する
+//	materialDataSprite->enableLighting = false;
+//	
+//}
+
+
+//// マテリアルCBufferの場所を設定
+//CommandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
+
+
+//ConstantBuffer<DirectionalLight> gDirectionalLight:register(b1);
+
+//rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;  // CBVを使う
+//rootParameters[3].ShaderVisibility = D3D12_SHADER_VISABILITY_PIXEL;  // PixelShaderで使う
+//rootParameters[3].Descriptor.ShaderRegister = 1;  // レジスタ番号１を使う
+
+// デフォルト値はとりあえず以下のようにしておく
+//directionalLightData->color = { 1.0f,1.0f,1.0f,1.0f };
+//directionalLightData->direction = { 0.0f,-1.0f,0.0f };
+//directionalLightData->intensity = 1.0f;
+
+
+
+
+
+//=====
+// のちにhlslに追加する
+//=====
+
+//struct DirectionalLight
+//{
+//	float32_t4 color;      // !< ライトの色
+//	float32_t3 direction;  // !< ライトの向き
+//	float intensity;	   // !< 輝度
+//};
+
+//if (gMatrial.enableLighting != 0)  // Lightingする場合
+//{
+//	float cos = saturate(dot(normalize(input.normal), -gDirectionalLight.direction));
+//	output.color = gMaterial.color * textureColor * gDirectionalLight.color * cos * gDirectionalLight.intensity;
+//}
+//else  // Lightingしない場合。前回までと同じ演算
+//{
+//	output.color = gMaterial.color * textureColor;
+//}
+
+
+
 
 //Windowsアプリでのエントリーポイント（main関数）
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
@@ -984,26 +991,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	ID3D12DescriptorHeap* dsvDescriptorHeap = CreateDescriptorHeap(device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1, false);
 
 
-
-
-	/*D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle(ID3D12DescriptorHeap* descriptorHeap, uint32_t descriptorSize, uint32_t index)
-	{
-		D3D12_CPU_DESCRIPTOR_HANDLE handleCPU = descriptorHeap->GetCPUDescriptorHandleForHeapStart();
-		handleCPU.ptr += (descriptorSize * index);
-		return handleCPU;
-	}
-
-
-	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(ID3D12DescriptorHeap* descriptorHeap, uint32_t descriptorSize, uint32_t index)
-	{
-		D3D12_GPU_DESCRIPTOR_HANDLE handleGPU = descriptorHeap->GetGPUDescriptorHandleForHeapStart();
-		handleGPU.ptr += (descriptorSize * index);
-		return handleGPU;
-	}*/
-
-
-
-
 #pragma endregion
 
 #pragma region SwapChainからResouceを引っ張ってくる
@@ -1026,7 +1013,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
 
-	// ディスクリプタの戦闘を取得する
+	// ディスクリプタの先頭を取得する
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvStartHandle = GetCPUDescriptorHandle(rtvDescriptorHeap, descriptorSizeRTV, 0);
 
 	// 描画先のRTVとDSVを設定する
@@ -1100,6 +1087,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma region RootParameter
 
+
+
 	// RootSignature作成。複数設定できるので配列。今回は結果１つだけなので長さ１の配列
 	D3D12_ROOT_PARAMETER rootParameters[3] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;  // CBVを使う
@@ -1171,7 +1160,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	inputElementDesec[1].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
 	inputElementDesec[2].SemanticName = "NORMAL";
 	inputElementDesec[2].SemanticIndex = 0;
-	inputElementDesec[2].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	inputElementDesec[2].Format = DXGI_FORMAT_R32G32B32_FLOAT;
 	inputElementDesec[2].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
 	inputLayoutDesc.pInputElementDescs = inputElementDesec;
@@ -1290,7 +1279,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	//=====
 	// ここで球体の生成用の計算をする
 	//=====
-	
+
 	//const uint32_t kSubdivision = 10;
 	//// 経度分割１つ分の角度。　
 	//const float kLonEvery = pi * 2.0f / float(kSubdivision);
@@ -1399,7 +1388,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	const DirectX::TexMetadata& metadata = mipImages.GetMetadata();
 	ID3D12Resource* textureResource = CreateTextrueResource(device, metadata);
 	ID3D12Resource* intermediateResource = UploadTextureData(textureResource, mipImages, device, commandList);
-	
+
+
 	// DepthStencilTextureとしてウィンドウのサイズで作成
 	ID3D12Resource* depthStencilResource = CreateDepthStencilTextureResource(device, kClientWidth, kClientHeight);
 
@@ -1421,24 +1411,22 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 
 	// Texture（二枚目）を読んで転送する
-	DirectX::ScratchImage mipImages2 = LoadTexture("resources/uvChecker.png");
+	DirectX::ScratchImage mipImages2 = LoadTexture("resources/monsterBall.png");
 	const DirectX::TexMetadata& metadata2 = mipImages2.GetMetadata();
 	ID3D12Resource* textureResource2 = CreateTextrueResource(device, metadata2);
 	ID3D12Resource* intermediateResource2 = UploadTextureData(textureResource, mipImages2, device, commandList);
 
-	// DepthStencilTextureとしてウィンドウのサイズで作成
-	ID3D12Resource* depthStencilResource = CreateDepthStencilTextureResource(device, kClientWidth, kClientHeight);
 
 	// metaDataをもとにSRVの設定
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc2{};
-	srvDesc.Format = metadata.format;
+	srvDesc.Format = metadata2.format;
 	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;  // 2Dテクスチャ
-	srvDesc.Texture2D.MipLevels = UINT(metadata.mipLevels);
+	srvDesc.Texture2D.MipLevels = UINT(metadata2.mipLevels);
 
 	// SRVを作成するDiscriptorHeapの場所を決める
-	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU2 = srvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU2 = srvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU2 = GetCPUDescriptorHandle(srvDescriptorHeap, descriptorSizeRTV, 2);
+	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU2 = GetGPUDescriptorHandle(srvDescriptorHeap, descriptorSizeSRV, 2);
 	// 先頭はImGuiが使っているのでその次に書く
 	textureSrvHandleCPU.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	textureSrvHandleGPU.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -1550,7 +1538,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			Matrix4x4 cameraMatrix = MakeAffineMatrix(cameraTransform.scale, cameraTransform.rotate, cameraTransform.translate);
 			Matrix4x4 viewMarix = Inverse(cameraMatrix);
 			Matrix4x4 projectionMatrix = MakePerspectiveFovMatrix(0.45f, float(kClientWidth) / float(kClientHeight), 0.1f, 100.0f);
-			Matrix4x4 orthMatrix = MakeOrthographicMatrix(0,0,5,5, 0.1f, 100);
+			Matrix4x4 orthMatrix = MakeOrthographicMatrix(0, 0, 5, 5, 0.1f, 100);
 
 			Matrix4x4 worldViewProjectionMatrix = Multiply(worldMatrix, Multiply(viewMarix, projectionMatrix));
 			*wvpData = worldViewProjectionMatrix;
@@ -1559,7 +1547,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			Matrix4x4 worldMatrixSprite = MakeAffineMatrix(transformSprite.scale, transformSprite.rotate, transformSprite.translate);
 			Matrix4x4 viewMatrixSprite = MakeIdentity4x4();
 			Matrix4x4 projectionMatrixSprite = MakeOrthographicMatrix(0.0f, 0.0f, float(kClientWidth), float(kClientHeight), 0.0f, 100.0f);
-			
+
 			Matrix4x4 worldViewProjectionMatrixSprite = Multiply(worldMatrixSprite, Multiply(viewMatrixSprite, projectionMatrixSprite));
 			*transformationMatrixDataSprite = worldViewProjectionMatrixSprite;
 
@@ -1571,7 +1559,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			// 開発用UIの処理。実際に開発用のUIを出す場合はここをゲーム固有の処理に置き換える
 			/*ImGui::ShowDemoWindow();*/
 			ImGui::ColorEdit4("Color", reinterpret_cast<float*>(materialData));
-			
+
+			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
+
 			// ImGuiの内部コマンドを生成する
 			ImGui::Render();
 
@@ -1638,7 +1628,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
 
 			// SRVのDescriptorTableの先頭を設定。２はrootParameter[2]である。
-			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
+			commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
 
 			// 描画！（DrawCall/ドローコール）。3頂点で1つのインスタンス。インスタンスについては今後
 			commandList->DrawInstanced(6, 1, 0, 0);
@@ -1656,7 +1646,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			// 描画！（DrawCall/ドローコール）
 			commandList->DrawInstanced(6, 1, 0, 0);
 
-			
+
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 
 
@@ -1745,7 +1735,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	vertexResourceSprite->Release();
 	transformationMatrixResourceSprite->Release();
 	textureResource2->Release();
-	
+
 
 
 
