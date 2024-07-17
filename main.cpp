@@ -104,17 +104,25 @@ struct VertexData
 	Vector3 normal;
 };
 
+bool useMonsterBall = true;
+
+struct Material
+{
+	Vector4 color;
+	int32_t enableLighting;
+};
+
 struct TransformationMatrix
 {
 	Matrix4x4 WVP;
 	Matrix4x4 World;
 };
 
-struct DirectionLight
+struct DirectionalLight
 {
-	Vector4 color;
-	Vector3 direction;
-	float intensity;
+	Vector4 color;      // !<ライトの色
+	Vector3 direction;  // !<ライトの向き
+	float intensity;    // !<輝度
 };
 
 // 行列の積
@@ -350,7 +358,6 @@ Matrix4x4 MakeOrthographicMatrix(float left, float top, float right, float botto
 
 	return matrix;
 }
-
 
 // デバッグ用ログの出力用関数
 void Log(const std::string& message)
@@ -651,71 +658,6 @@ D3D12_GPU_DESCRIPTOR_HANDLE GetGPUDescriptorHandle(ID3D12DescriptorHeap* descrip
 	handleGPU.ptr += (descriptorSize * index);
 	return handleGPU;
 }
-
-
-
-bool useMonsterBall = true;
-
-
-
-
-
-
-//// Lightingを有効にする
-//materilDataSprite->enableLighting = false;
-
-//// sprite用のマテリアルリソースを作る
-//ID3D12Resource* materialResourceSprite = CreateBufferResource(device, sizeof(Material))
-//{
-//	// ...Mapしてデータを書き込む。色は白を設定しておくといい
-//
-//	// spriteはLightingしないのでfalseを設定する
-//	materialDataSprite->enableLighting = false;
-//	
-//}
-
-
-//// マテリアルCBufferの場所を設定
-//CommandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
-
-
-//ConstantBuffer<DirectionalLight> gDirectionalLight:register(b1);
-
-//rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;  // CBVを使う
-//rootParameters[3].ShaderVisibility = D3D12_SHADER_VISABILITY_PIXEL;  // PixelShaderで使う
-//rootParameters[3].Descriptor.ShaderRegister = 1;  // レジスタ番号１を使う
-
-// デフォルト値はとりあえず以下のようにしておく
-//directionalLightData->color = { 1.0f,1.0f,1.0f,1.0f };
-//directionalLightData->direction = { 0.0f,-1.0f,0.0f };
-//directionalLightData->intensity = 1.0f;
-
-
-
-
-
-//=====
-// のちにhlslに追加する
-//=====
-
-//struct DirectionalLight
-//{
-//	float32_t4 color;      // !< ライトの色
-//	float32_t3 direction;  // !< ライトの向き
-//	float intensity;	   // !< 輝度
-//};
-
-//if (gMatrial.enableLighting != 0)  // Lightingする場合
-//{
-//	float cos = saturate(dot(normalize(input.normal), -gDirectionalLight.direction));
-//	output.color = gMaterial.color * textureColor * gDirectionalLight.color * cos * gDirectionalLight.intensity;
-//}
-//else  // Lightingしない場合。前回までと同じ演算
-//{
-//	output.color = gMaterial.color * textureColor;
-//}
-
-
 
 
 //Windowsアプリでのエントリーポイント（main関数）
@@ -1027,7 +969,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	device->CreateRenderTargetView(swapChainResources[0], &rtvDesc, rtvHandles[0]);
 
 	// ２つ目のディスクリプタハンドルを得る
-	rtvHandles[1] = GetCPUDescriptorHandle(rtvDescriptorHeap, descriptorSizeDSV, 1);
+	rtvHandles[1] = GetCPUDescriptorHandle(rtvDescriptorHeap, descriptorSizeRTV, 1);
 
 	// ２つ目を作成する
 	device->CreateRenderTargetView(swapChainResources[1], &rtvDesc, rtvHandles[1]);
@@ -1087,20 +1029,24 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma region RootParameter
 
-
-
 	// RootSignature作成。複数設定できるので配列。今回は結果１つだけなので長さ１の配列
-	D3D12_ROOT_PARAMETER rootParameters[3] = {};
+	D3D12_ROOT_PARAMETER rootParameters[4] = {};
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;  // CBVを使う
 	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;  // PixelShaderで使う
 	rootParameters[0].Descriptor.ShaderRegister = 0;  // レジスタ番号0とバインド
+
 	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;  // b0のbと一致する
 	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 	rootParameters[1].Descriptor.ShaderRegister = 0;  // b0のbと一致する。もしb11と紐づけたいなら11となる
+	
 	rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;  // DescriptorTableを使う
 	rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;  // PixelShaderで使う
 	rootParameters[2].DescriptorTable.pDescriptorRanges = descriptorRange;  // Tableの中身の配列を指定
 	rootParameters[2].DescriptorTable.NumDescriptorRanges = _countof(descriptorRange);  // Tableで利用する数
+	
+	rootParameters[3].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;  // CBVを使う
+	rootParameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;  // PixelShaderで使う
+	rootParameters[3].Descriptor.ShaderRegister = 1;  // レジスタ番号1を使う
 
 	descriptionRootSignature.pParameters = rootParameters;  // ルートパラメータ配列へのポインタ
 	descriptionRootSignature.NumParameters = _countof(rootParameters);  // 配列の長さ
@@ -1300,6 +1246,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	//}
 
 
+	//==========
+	// のちに法線情報を追加
+	//==========
+	/*vertexData[index].normal.x = vertexData[index].position.x;*/
+
+	// Spriteは-zの向きにしておく
+	//vertexDataSprite[0].normal={0.0f,0.0f,-1.0f};
+
+	// Lightingを有効にする
+	/*MaterialDataSprite->enableLighting = false;*/
+
 #pragma region VertexBufferViewを作成
 
 	// 頂点バッファビューを作成する
@@ -1382,13 +1339,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	// 単位行列を書き込んでおく
 	*transformationMatrixDataSprite = MakeIdentity4x4();
 
+	//=====
+	// テクスチャ１枚目
+	//=====
 
 	// Textureを読んで転送する
 	DirectX::ScratchImage mipImages = LoadTexture("resources/uvChecker.png");
 	const DirectX::TexMetadata& metadata = mipImages.GetMetadata();
 	ID3D12Resource* textureResource = CreateTextrueResource(device, metadata);
 	ID3D12Resource* intermediateResource = UploadTextureData(textureResource, mipImages, device, commandList);
-
 
 	// DepthStencilTextureとしてウィンドウのサイズで作成
 	ID3D12Resource* depthStencilResource = CreateDepthStencilTextureResource(device, kClientWidth, kClientHeight);
@@ -1409,27 +1368,30 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	// SRVの生成
 	device->CreateShaderResourceView(textureResource, &srvDesc, textureSrvHandleCPU);
 
+	//=====
+	// テクスチャ２枚目
+	//=====
+
 
 	// Texture（二枚目）を読んで転送する
 	DirectX::ScratchImage mipImages2 = LoadTexture("resources/monsterBall.png");
 	const DirectX::TexMetadata& metadata2 = mipImages2.GetMetadata();
 	ID3D12Resource* textureResource2 = CreateTextrueResource(device, metadata2);
-	ID3D12Resource* intermediateResource2 = UploadTextureData(textureResource, mipImages2, device, commandList);
-
+	ID3D12Resource* intermediateResource2 = UploadTextureData(textureResource2, mipImages2, device, commandList);
 
 	// metaDataをもとにSRVの設定
 	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc2{};
-	srvDesc.Format = metadata2.format;
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;  // 2Dテクスチャ
-	srvDesc.Texture2D.MipLevels = UINT(metadata2.mipLevels);
+	srvDesc2.Format = metadata2.format;
+	srvDesc2.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc2.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;  // 2Dテクスチャ
+	srvDesc2.Texture2D.MipLevels = UINT(metadata2.mipLevels);
 
 	// SRVを作成するDiscriptorHeapの場所を決める
-	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU2 = GetCPUDescriptorHandle(srvDescriptorHeap, descriptorSizeRTV, 2);
+	D3D12_CPU_DESCRIPTOR_HANDLE textureSrvHandleCPU2 = GetCPUDescriptorHandle(srvDescriptorHeap, descriptorSizeSRV, 2);
 	D3D12_GPU_DESCRIPTOR_HANDLE textureSrvHandleGPU2 = GetGPUDescriptorHandle(srvDescriptorHeap, descriptorSizeSRV, 2);
 	// 先頭はImGuiが使っているのでその次に書く
-	textureSrvHandleCPU.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	textureSrvHandleGPU.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	textureSrvHandleCPU2.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	textureSrvHandleGPU2.ptr += device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	// SRVの生成
 	device->CreateShaderResourceView(textureResource2, &srvDesc2, textureSrvHandleCPU2);
 
@@ -1449,12 +1411,28 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	Vector4* materialData = nullptr;
 	// 書き込むためのアドレスを取得
 	materialResource->Map(0, nullptr, reinterpret_cast<void**>(&materialData));
-
 	//色データ
 	float materialFloat[4] = { 1.0f,0.0f,0.0f,1.0f };
-
 	// 今回は赤を書き込んでみる
 	*materialData = Vector4(1.0, 1.0f, 1.0f, 1.0f);
+
+	
+	// Sprite用のマテリアルリソースを作成する
+	ID3D12Resource* materialResourceSprite = CreateBufferResource(device, sizeof(Material));
+	// マテリアルデータを書き込む
+	Vector4* materialSpriteData = nullptr;
+	// 書き込むためのアドレスを取得
+	materialResourceSprite->Map(0, nullptr, reinterpret_cast<void**>(&materialSpriteData));
+	// 色データ
+	float materialSpriteFloat[4] = { 1.0f,1.0f,1.0f,1.0f };
+	// SpriteはLightingしないのでfalseを設定する
+	/*materialDataSprite->enableLighting = false;*/
+
+	// DirectionalLightの設定
+	// デフォルト値はとりあえず以下のようにしておく
+	/*DirectionalLightData->color = { 1.0f,1.0f,1.0f,1.0f };
+	DirectionalLightData->direction = { 0.0f,-1.0f,0.0f };
+	DirectionalLightData->intensity = 1.0f;*/
 
 #pragma endregion
 
@@ -1488,9 +1466,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	wvpResource->Map(0, nullptr, reinterpret_cast<void**>(&wvpData));
 	// 単位行列を書き込んでいく
 	*wvpData = MakeIdentity4x4();
-
-
-
 
 	// Transform変数の生成
 	Transform transform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
@@ -1559,7 +1534,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			// 開発用UIの処理。実際に開発用のUIを出す場合はここをゲーム固有の処理に置き換える
 			/*ImGui::ShowDemoWindow();*/
 			ImGui::ColorEdit4("Color", reinterpret_cast<float*>(materialData));
-
 			ImGui::Checkbox("useMonsterBall", &useMonsterBall);
 
 			// ImGuiの内部コマンドを生成する
@@ -1625,7 +1599,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			commandList->SetGraphicsRootConstantBufferView(1, wvpResource->GetGPUVirtualAddress());
 
 			// マテリアルCBufferの場所を設定
-			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
+			commandList->SetGraphicsRootConstantBufferView(0, materialResourceSprite->GetGPUVirtualAddress());
 
 			// SRVのDescriptorTableの先頭を設定。２はrootParameter[2]である。
 			commandList->SetGraphicsRootDescriptorTable(2, useMonsterBall ? textureSrvHandleGPU2 : textureSrvHandleGPU);
