@@ -1657,6 +1657,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	vertexResourceSprite->Release();
 	transformationMatrixResourceSprite->Release();
 	textureResource2->Release();
+	intermediateResource2->Release();
 	
 
 
