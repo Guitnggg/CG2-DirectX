@@ -1095,7 +1095,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma region InputLayoutの設定
 
 	// InputLayout
-	D3D12_INPUT_ELEMENT_DESC inputElementDesec[2] = {};
+	D3D12_INPUT_ELEMENT_DESC inputElementDesec[3] = {};
 	inputElementDesec[0].SemanticName = "POSITION";
 	inputElementDesec[0].SemanticIndex = 0;
 	inputElementDesec[0].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
