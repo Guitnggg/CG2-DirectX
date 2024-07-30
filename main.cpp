@@ -1603,7 +1603,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	float* inputTransform[3] = { &transform.translate.x,&transform.translate.y,&transform.translate.z };
 
-
 	float* inputRotate[3] = { &transform.rotate.x,&transform.rotate.y,&transform.rotate.z };
 
 	float* inputScale[3] = { &transform.scale.x,&transform.scale.y,&transform.scale.z };
