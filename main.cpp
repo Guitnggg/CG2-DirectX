@@ -584,7 +584,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
-
 IDxcBlob* CompileShader(
 	// CompileするShaderファイルへのパス
 	const std::wstring& filePath,
@@ -1381,7 +1380,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	//assert(SUCCEEDED(hr));
 
 
-	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * 3072);
+	ID3D12Resource* vertexResource = CreateBufferResource(device, sizeof(VertexData) * 1536);
 
 	// Sprite用の頂点リソースを作る
 	ID3D12Resource* vertexResourceSprite = CreateBufferResource(device, sizeof(VertexData) * 6);
@@ -1419,7 +1418,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	// リソースの先頭のアドレスから使う
 	vertexBufferView.BufferLocation = vertexResource->GetGPUVirtualAddress();
 	// 使用するリソースのサイズは頂点３つ分のサイズ
-	vertexBufferView.SizeInBytes = sizeof(VertexData) * 3072;
+	vertexBufferView.SizeInBytes = sizeof(VertexData) * 1536;
 	// １頂点あたりのサイズ
 	vertexBufferView.StrideInBytes = sizeof(VertexData);
 
@@ -1575,13 +1574,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma endregion
 
-	
-
-
-
-
 	// Transform変数の生成
-	Transform transform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
+	Transform transform{ {0.5f,0.5f,0.5f},{0.0f,0.0f,0.0f},{0.0f,0.0f,0.0f} };
 
 	Transform cameraTransform{ {1.0f,1.0f,1.0f},{0.0f,0.0f,0.0f},{0.0f,0.0f,-5.0f} };
 
@@ -1626,7 +1620,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		else
 		{
 			// 回転させる
-			/*transform.rotate.y += 0.01f;*/
+			transform.rotate.y += 0.01f;
 			Matrix4x4 worldMatrix = MakeAffineMatrix(transform.scale, transform.rotate, transform.translate);
 			*wvpData = worldMatrix;
 
@@ -1658,29 +1652,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			/*ImGui::ShowDemoWindow();*/
 			ImGui::ColorEdit4("Color", reinterpret_cast<float*>(materialData));
 
-			ImGui::Text("Traiangle");
+			ImGui::Text("Sphere");
 		
-			
-
-			ImGui::InputFloat3("Vertex", *inputTransform);
 			ImGui::SliderFloat3("SliderVertex", *inputTransform, -5.0f, 5.0f);
-
-			ImGui::InputFloat3("Rotate", *inputRotate);
 			ImGui::SliderFloat3("SliderRotate", *inputRotate, -10.0f, 10.0f);
-
-			ImGui::InputFloat3("Scale", *inputScale);
 			ImGui::SliderFloat3("SliderScale", *inputScale, 0.5f, 5.0f);
 
-
 			ImGui::Text("Sprite");
-			ImGui::InputFloat("SpriteX", &transformSprite.translate.x);
+			
 			ImGui::SliderFloat("SliderSpriteX", &transformSprite.translate.x, 0.0f, 1000.0f);
-
-			ImGui::InputFloat("SpriteY", &transformSprite.translate.y);
 			ImGui::SliderFloat("SliderSpriteY", &transformSprite.translate.y, 0.0f, 600.0f);
-
-			ImGui::InputFloat("SpriteZ", &transformSprite.translate.z);
-			ImGui::SliderFloat("SliderSpriteZ", &transformSprite.translate.z, 0.0f, 0.0f);
+			
 			
 			// ImGuiの内部コマンドを生成する
 			ImGui::Render();
@@ -1751,7 +1733,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			commandList->SetGraphicsRootDescriptorTable(2, textureSrvHandleGPU);
 
 			// 描画！（DrawCall/ドローコール）。3頂点で1つのインスタンス。インスタンスについては今後
-			commandList->DrawInstanced(3072, 1, 0, 0);
+			commandList->DrawInstanced(1536, 1, 0, 0);
 
 
 			// Spriteの描画。変更が必要なものだけ変更する
@@ -1759,7 +1741,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			// TransformationMatrixCBufferの場所を設定
 			commandList->SetGraphicsRootConstantBufferView(1, transformationMatrixResourceSprite->GetGPUVirtualAddress());
 			// 描画！（DrawCall/ドローコール）
-			/*commandList->DrawInstanced(6, 1, 0, 0);*/
+			commandList->DrawInstanced(6, 1, 0, 0);
 
 			
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
