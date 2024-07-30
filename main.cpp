@@ -474,14 +474,14 @@ void DrawSphere(VertexData* vertexDataSphere) {
 	VertexData vertexDataDkaraB[kSubdivision]{};
 
 
-	for (uint32_t latIndex = 0; latIndex < kSubdivision; ++latIndex) {
+	for (uint32_t latIndex = 0; latIndex < kSubdivision; ++latIndex) 
+	{
 		float lat = -pi / 2.0f + kLatEvery * latIndex;//緯度 シ－タ
 
-		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; ++lonIndex) {
-
+		for (uint32_t lonIndex = 0; lonIndex < kSubdivision; ++lonIndex) 
+		{
 			uint32_t start = (latIndex * kSubdivision + lonIndex) * 6;
 			float lon = lonIndex * kLonEvery;//経度　ファイ
-
 
 			VertexData vertA{};
 			vertA.position =
@@ -551,9 +551,7 @@ void DrawSphere(VertexData* vertexDataSphere) {
 			vertexDataSphere[start + 5] = vertD;
 
 		}
-
 	}
-
 }
 
 
